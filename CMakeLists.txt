@@ -18,11 +18,13 @@ option(LIBCORO_EXTERNAL_DEPENDENCIES "Use find_package to resolve dependencies, 
 option(LIBCORO_BUILD_TESTS           "Build the tests, Default=ON." ON)
 option(LIBCORO_CODE_COVERAGE         "Enable code coverage, tests must also be enabled, Default=OFF" OFF)
 option(LIBCORO_BUILD_EXAMPLES        "Build the examples, Default=ON." ON)
+option(LIBCORO_BUILD_SHARED_LIBS     "Build the shared library, Default=ON." ON)
 
 message("${PROJECT_NAME} LIBCORO_EXTERNAL_DEPENDENCIES = ${LIBCORO_EXTERNAL_DEPENDENCIES}")
 message("${PROJECT_NAME} LIBCORO_BUILD_TESTS           = ${LIBCORO_BUILD_TESTS}")
 message("${PROJECT_NAME} LIBCORO_CODE_COVERAGE         = ${LIBCORO_CODE_COVERAGE}")
 message("${PROJECT_NAME} LIBCORO_BUILD_EXAMPLES        = ${LIBCORO_BUILD_EXAMPLES}")
+message("${PROJECT_NAME} LIBCORO_BUILD_SHARED_LIBS     = ${LIBCORO_BUILD_SHARED_LIBS}")
 
 if(NOT LIBCORO_EXTERNAL_DEPENDENCIES)
     set(CARES_STATIC    ON  CACHE INTERNAL "")
@@ -79,10 +81,25 @@ set(LIBCORO_SOURCE_FILES
     inc/coro/when_all.hpp
 )
 
-add_library(${PROJECT_NAME} STATIC ${LIBCORO_SOURCE_FILES})
-set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX PREFIX "")
+if(LIBCORO_BUILD_SHARED_LIBS)
+    add_library(${PROJECT_NAME} SHARED ${LIBCORO_SOURCE_FILES})
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+        PREFIX ""
+        VERSION "${PROJECT_VERSION}"
+        SOVERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}"
+    )
+else()
+    add_library(${PROJECT_NAME} STATIC ${LIBCORO_SOURCE_FILES})
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+        PREFIX ""
+    )
+endif()
+
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
-target_include_directories(${PROJECT_NAME} PUBLIC inc)
+target_include_directories(${PROJECT_NAME} PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/inc>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/coro>
+)
 target_link_libraries(${PROJECT_NAME} PUBLIC pthread c-ares::cares tl::expected OpenSSL::SSL OpenSSL::Crypto)
 
 if(${CMAKE_CXX_COMPILER_ID} MATCHES "GNU")
@@ -110,10 +127,54 @@ if(LIBCORO_BUILD_EXAMPLES)
 endif()
 
 
+# Generate and install CMake package configuration files
+include(CMakePackageConfigHelpers)
+set(LIBCORO_CMAKE_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/libcoro")
+set(targets_export_name "libcoro-targets")
+
+install(
+    TARGETS libcoro
+    EXPORT ${targets_export_name}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)
+
+# Generate the version, config and target files
+write_basic_package_version_file(
+    "${PROJECT_BINARY_DIR}/libcoro-config-version.cmake"
+    VERSION ${PROJECT_VERSION}
+    COMPATIBILITY AnyNewerVersion
+)
+configure_package_config_file(
+    "${PROJECT_SOURCE_DIR}/libcoro-config.cmake.in"
+    "${PROJECT_BINARY_DIR}/libcoro-config.cmake"
+    INSTALL_DESTINATION "${LIBCORO_CMAKE_DIR}"
+)
+
 # generate pc file for pkg-config
-set(target1 ${PROJECT_NAME})
 configure_file(libcoro.pc.in libcoro.pc @ONLY)
 
-install(TARGETS libcoro)
-install(DIRECTORY inc/coro TYPE INCLUDE)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libcoro.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
+# install the header files
+install(
+    DIRECTORY "${PROJECT_SOURCE_DIR}/inc/coro/"
+    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/coro"
+)
+
+# Install version, config and target files.
+install(
+    FILES
+        "${PROJECT_BINARY_DIR}/libcoro-config.cmake"
+        "${PROJECT_BINARY_DIR}/libcoro-config-version.cmake"
+    DESTINATION "${LIBCORO_CMAKE_DIR}"
+)
+install(
+    EXPORT ${targets_export_name}
+    FILE ${targets_export_name}.cmake
+    NAMESPACE libcoro::
+    DESTINATION "${LIBCORO_CMAKE_DIR}"
+)
+install(
+    FILES ${CMAKE_CURRENT_BINARY_DIR}/libcoro.pc
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
+)
