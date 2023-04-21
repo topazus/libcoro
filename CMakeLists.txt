@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 3.0)
-project(libcoro LANGUAGES CXX DESCRIPTION "C++20 coroutine library")
+project(libcoro
+    VERSION 0.7.0
+    LANGUAGES CXX
+    DESCRIPTION "C++20 coroutine library"
+)
 
 include(GNUInstallDirs)
 
@@ -85,6 +89,8 @@ if(LIBCORO_BUILD_SHARED_LIBS)
     add_library(${PROJECT_NAME} SHARED ${LIBCORO_SOURCE_FILES})
     set_target_properties(${PROJECT_NAME} PROPERTIES
         PREFIX ""
+        VERSION "${PROJECT_VERSION}"
+        SOVERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}"
     )
 else()
     add_library(${PROJECT_NAME} STATIC ${LIBCORO_SOURCE_FILES})
