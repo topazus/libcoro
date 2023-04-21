@@ -18,11 +18,13 @@ option(LIBCORO_EXTERNAL_DEPENDENCIES "Use find_package to resolve dependencies, 
 option(LIBCORO_BUILD_TESTS           "Build the tests, Default=ON." ON)
 option(LIBCORO_CODE_COVERAGE         "Enable code coverage, tests must also be enabled, Default=OFF" OFF)
 option(LIBCORO_BUILD_EXAMPLES        "Build the examples, Default=ON." ON)
+option(LIBCORO_BUILD_SHARED_LIBS     "Build the shared library, Default=ON." ON)
 
 message("${PROJECT_NAME} LIBCORO_EXTERNAL_DEPENDENCIES = ${LIBCORO_EXTERNAL_DEPENDENCIES}")
 message("${PROJECT_NAME} LIBCORO_BUILD_TESTS           = ${LIBCORO_BUILD_TESTS}")
 message("${PROJECT_NAME} LIBCORO_CODE_COVERAGE         = ${LIBCORO_CODE_COVERAGE}")
 message("${PROJECT_NAME} LIBCORO_BUILD_EXAMPLES        = ${LIBCORO_BUILD_EXAMPLES}")
+message("${PROJECT_NAME} LIBCORO_BUILD_SHARED_LIBS     = ${LIBCORO_BUILD_SHARED_LIBS}")
 
 if(NOT LIBCORO_EXTERNAL_DEPENDENCIES)
     set(CARES_STATIC    ON  CACHE INTERNAL "")
@@ -79,8 +81,18 @@ set(LIBCORO_SOURCE_FILES
     inc/coro/when_all.hpp
 )
 
-add_library(${PROJECT_NAME} STATIC ${LIBCORO_SOURCE_FILES})
-set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX PREFIX "")
+if(LIBCORO_BUILD_SHARED_LIBS)
+    add_library(${PROJECT_NAME} SHARED ${LIBCORO_SOURCE_FILES})
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+        PREFIX ""
+    )
+else()
+    add_library(${PROJECT_NAME} STATIC ${LIBCORO_SOURCE_FILES})
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+        PREFIX ""
+    )
+endif()
+
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
 target_include_directories(${PROJECT_NAME} PUBLIC inc)
 target_link_libraries(${PROJECT_NAME} PUBLIC pthread c-ares::cares tl::expected OpenSSL::SSL OpenSSL::Crypto)
