@@ -1,0 +1,21 @@
+# Config file for the libcoro package
+#
+# This provides the libcoro::libcoro target, which you can link against the library by adding it
+# to target_link_libraries().
+
+@PACKAGE_INIT@
+
+# Load the cmake targets, if not already done
+if(NOT TARGET libcoro::libcoro)
+    include(${CMAKE_CURRENT_LIST_DIR}/@targets_export_name@.cmake)
+endif()
+
+include(CMakeFindDependencyMacro)
+if(@LIBCORO_EXTERNAL_DEPENDENCIES@)
+    find_dependency(c-ares)
+    find_dependency(tl-expected)
+endif()
+find_dependency(OpenSSL)
+
+check_required_components(@PROJECT_NAME@)
+message(STATUS "Found @PROJECT_NAME@: (found version \"${@PROJECT_NAME@_VERSION}\")")
