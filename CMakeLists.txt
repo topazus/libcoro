@@ -100,7 +100,10 @@ else()
 endif()
 
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
-target_include_directories(${PROJECT_NAME} PUBLIC inc)
+target_include_directories(${PROJECT_NAME} PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/inc>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+)
 target_link_libraries(${PROJECT_NAME} PUBLIC pthread c-ares::cares tl::expected OpenSSL::SSL OpenSSL::Crypto)
 
 if(${CMAKE_CXX_COMPILER_ID} MATCHES "GNU")
@@ -127,11 +130,49 @@ if(LIBCORO_BUILD_EXAMPLES)
     add_subdirectory(examples)
 endif()
 
+# Generate and install CMake package configuration files
+include(CMakePackageConfigHelpers)
+set(targets_export_name "libcoro-targets")
+
+install(
+    TARGETS libcoro
+    EXPORT ${targets_export_name}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)
+
+write_basic_package_version_file(
+    "${PROJECT_BINARY_DIR}/libcoro-config-version.cmake"
+    VERSION ${PROJECT_VERSION}
+    COMPATIBILITY AnyNewerVersion
+)
+configure_package_config_file(
+    "${PROJECT_SOURCE_DIR}/libcoro-config.cmake.in"
+    "${PROJECT_BINARY_DIR}/libcoro-config.cmake"
+    INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/libcoro"
+)
+
+install(
+    FILES
+        "${PROJECT_BINARY_DIR}/libcoro-config.cmake"
+        "${PROJECT_BINARY_DIR}/libcoro-config-version.cmake"
+    DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/libcoro"
+)
+install(
+    EXPORT ${targets_export_name}
+    FILE ${targets_export_name}.cmake
+    NAMESPACE libcoro::
+    DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/libcoro"
+)
+
+# install the header files
+install(
+    DIRECTORY "${PROJECT_SOURCE_DIR}/inc/coro"
+    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
+)
 
 # generate pc file for pkg-config
 set(target1 ${PROJECT_NAME})
 configure_file(libcoro.pc.in libcoro.pc @ONLY)
-
-install(TARGETS libcoro)
-install(DIRECTORY inc/coro TYPE INCLUDE)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libcoro.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
