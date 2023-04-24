@@ -101,7 +101,9 @@ jobs:
                         gcc-c++ \
                         lcov \
                         openssl \
-                        openssl-devel
+                        openssl-devel \
+                        c-ares-devel \
+                        expected-devel
             -   name: Checkout # recurisve checkout requires git to be installed first
                 uses: actions/checkout@v2
                 with:
@@ -112,6 +114,7 @@ jobs:
                     cd build-debug-g++
                     cmake \
                         -GNinja \
+                        -DLIBCORO_EXTERNAL_DEPENDENCIES=ON \
                         -DLIBCORO_CODE_COVERAGE=ON \
                         -DCMAKE_BUILD_TYPE=Debug \
                         -DCMAKE_C_COMPILER=gcc \
@@ -124,6 +127,7 @@ jobs:
                     cd build-release-g++
                     cmake \
                         -GNinja \
+                        -DLIBCORO_EXTERNAL_DEPENDENCIES=ON \
                         -DCMAKE_BUILD_TYPE=Release \
                         -DCMAKE_C_COMPILER=gcc \
                         -DCMAKE_CXX_COMPILER=g++ \
