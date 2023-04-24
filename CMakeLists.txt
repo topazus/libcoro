@@ -104,7 +104,16 @@ target_include_directories(${PROJECT_NAME} PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/inc>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
-target_link_libraries(${PROJECT_NAME} PUBLIC pthread c-ares::cares tl::expected OpenSSL::SSL OpenSSL::Crypto)
+if(NOT LIBCORO_EXTERNAL_DEPENDENCIES)
+    target_include_directories(
+        ${PROJECT_NAME}
+        PUBLIC
+            $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/vendor>
+    )
+    target_link_libraries(${PROJECT_NAME} PUBLIC pthread cares expected OpenSSL::SSL OpenSSL::Crypto)
+else()
+    target_link_libraries(${PROJECT_NAME} PUBLIC pthread c-ares::cares tl::expected OpenSSL::SSL OpenSSL::Crypto)
+endif()
 
 if(${CMAKE_CXX_COMPILER_ID} MATCHES "GNU")
     if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "10.2.0")
