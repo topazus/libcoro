@@ -110,7 +110,7 @@ if(NOT LIBCORO_EXTERNAL_DEPENDENCIES)
         PUBLIC
             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/vendor>
     )
-    target_link_libraries(${PROJECT_NAME} PUBLIC pthread cares expected OpenSSL::SSL OpenSSL::Crypto)
+    target_link_libraries(${PROJECT_NAME} PRIVATE pthread cares expected OpenSSL::SSL OpenSSL::Crypto)
 else()
     target_link_libraries(${PROJECT_NAME} PUBLIC pthread c-ares::cares tl::expected OpenSSL::SSL OpenSSL::Crypto)
 endif()
