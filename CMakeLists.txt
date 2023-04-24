@@ -105,6 +105,11 @@ target_include_directories(${PROJECT_NAME} PUBLIC
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 if(NOT LIBCORO_EXTERNAL_DEPENDENCIES)
+    target_include_directories(
+        ${PROJECT_NAME}
+        PUBLIC
+            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/vendor>
+    )
     target_link_libraries(${PROJECT_NAME} PUBLIC pthread cares expected OpenSSL::SSL OpenSSL::Crypto)
 else()
     target_link_libraries(${PROJECT_NAME} PUBLIC pthread c-ares::cares tl::expected OpenSSL::SSL OpenSSL::Crypto)
