@@ -173,6 +173,8 @@ install(
 )
 
 # generate pc file for pkg-config
-set(target1 ${PROJECT_NAME})
 configure_file(libcoro.pc.in libcoro.pc @ONLY)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libcoro.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
+install(
+    FILES "${CMAKE_CURRENT_BINARY_DIR}/libcoro.pc"
+    DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig"
+)
