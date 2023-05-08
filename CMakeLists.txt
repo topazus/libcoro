@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 3.0)
-project(libcoro LANGUAGES CXX DESCRIPTION "C++20 coroutine library")
+project(libcoro
+    VERSION 0.7.0
+    LANGUAGES CXX
+    DESCRIPTION "C++20 coroutine library"
+)
 
 include(GNUInstallDirs)
 
@@ -98,14 +102,9 @@ endif()
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
 target_include_directories(${PROJECT_NAME} PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/inc>
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/coro>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 if(NOT LIBCORO_EXTERNAL_DEPENDENCIES)
-    target_include_directories(
-        ${PROJECT_NAME}
-        PUBLIC
-            $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/vendor>
-    )
     target_link_libraries(${PROJECT_NAME} PUBLIC pthread cares expected OpenSSL::SSL OpenSSL::Crypto)
 else()
     target_link_libraries(${PROJECT_NAME} PUBLIC pthread c-ares::cares tl::expected OpenSSL::SSL OpenSSL::Crypto)
@@ -135,6 +134,47 @@ if(LIBCORO_BUILD_EXAMPLES)
     add_subdirectory(examples)
 endif()
 
+# Generate and install CMake package configuration files
+include(CMakePackageConfigHelpers)
+set(targets_export_name "libcoro-targets")
+
+install(
+    TARGETS libcoro
+    EXPORT ${targets_export_name}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)
+
+write_basic_package_version_file(
+    "${PROJECT_BINARY_DIR}/libcoro-config-version.cmake"
+    VERSION ${PROJECT_VERSION}
+    COMPATIBILITY AnyNewerVersion
+)
+configure_package_config_file(
+    "${PROJECT_SOURCE_DIR}/libcoro-config.cmake.in"
+    "${PROJECT_BINARY_DIR}/libcoro-config.cmake"
+    INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/libcoro"
+)
+
+install(
+    FILES
+        "${PROJECT_BINARY_DIR}/libcoro-config.cmake"
+        "${PROJECT_BINARY_DIR}/libcoro-config-version.cmake"
+    DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/libcoro"
+)
+install(
+    EXPORT ${targets_export_name}
+    FILE ${targets_export_name}.cmake
+    NAMESPACE libcoro::
+    DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/libcoro"
+)
+
+# install the header files
+install(
+    DIRECTORY "${PROJECT_SOURCE_DIR}/inc/coro"
+    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
+)
 
 # Generate and install CMake package configuration files
 include(CMakePackageConfigHelpers)
@@ -163,27 +203,7 @@ configure_package_config_file(
 
 # generate pc file for pkg-config
 configure_file(libcoro.pc.in libcoro.pc @ONLY)
-
-# install the header files
 install(
-    DIRECTORY "${PROJECT_SOURCE_DIR}/inc/coro/"
-    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/coro"
-)
-
-# Install version, config and target files.
-install(
-    FILES
-        "${PROJECT_BINARY_DIR}/libcoro-config.cmake"
-        "${PROJECT_BINARY_DIR}/libcoro-config-version.cmake"
-    DESTINATION "${LIBCORO_CMAKE_DIR}"
-)
-install(
-    EXPORT ${targets_export_name}
-    FILE ${targets_export_name}.cmake
-    NAMESPACE libcoro::
-    DESTINATION "${LIBCORO_CMAKE_DIR}"
-)
-install(
-    FILES ${CMAKE_CURRENT_BINARY_DIR}/libcoro.pc
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
+    FILES "${CMAKE_CURRENT_BINARY_DIR}/libcoro.pc"
+    DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig"
 )

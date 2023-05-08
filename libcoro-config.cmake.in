@@ -1,6 +1,6 @@
 # Config file for the libcoro package
 #
-# This provides the coro::coro target, which you can link against the library by adding it
+# This provides the libcoro::libcoro target, which you can link against the library by adding it
 # to target_link_libraries().
 
 @PACKAGE_INIT@
