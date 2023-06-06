@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.0)
-project(libcoro 
+project(libcoro
     VERSION 0.7.0
-    LANGUAGES CXX 
+    LANGUAGES CXX
     DESCRIPTION "C++20 coroutine library"
 )
 
@@ -18,12 +18,14 @@ execute_process(
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
+option(LIBCORO_BUILD_SHARED_LIBS "Build shared libraries, Default=OFF." OFF)
 option(LIBCORO_EXTERNAL_DEPENDENCIES "Use Cmake find_package to resolve dependencies instead of embedded libraries, Default=OFF." OFF)
 option(LIBCORO_BUILD_TESTS           "Build the tests, Default=ON." ON)
 option(LIBCORO_CODE_COVERAGE         "Enable code coverage, tests must also be enabled, Default=OFF" OFF)
 option(LIBCORO_BUILD_EXAMPLES        "Build the examples, Default=ON." ON)
 option(LIBCORO_FEATURE_NETWORKING    "Include networking features, Default=ON." ON)
 
+message("${PROJECT_NAME} LIBCORO_BUILD_SHARED_LIBS    = ${LIBCORO_BUILD_SHARED_LIBS}")
 message("${PROJECT_NAME} LIBCORO_EXTERNAL_DEPENDENCIES = ${LIBCORO_EXTERNAL_DEPENDENCIES}")
 message("${PROJECT_NAME} LIBCORO_BUILD_TESTS           = ${LIBCORO_BUILD_TESTS}")
 message("${PROJECT_NAME} LIBCORO_CODE_COVERAGE         = ${LIBCORO_CODE_COVERAGE}")
@@ -95,8 +97,15 @@ if(LIBCORO_FEATURE_NETWORKING)
     )
 endif()
 
-add_library(${PROJECT_NAME} STATIC ${LIBCORO_SOURCE_FILES})
-set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX PREFIX "")
+if(LIBCORO_BUILD_SHARED_LIBS)
+    add_library(${PROJECT_NAME} SHARED ${LIBCORO_SOURCE_FILES})
+else()
+    add_library(${PROJECT_NAME} STATIC ${LIBCORO_SOURCE_FILES})
+endif()
+set_target_properties(${PROJECT_NAME} PROPERTIES
+    VERSION ${PROJECT_VERSION}
+    SOVERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
+    LINKER_LANGUAGE CXX PREFIX "")
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
 target_include_directories(${PROJECT_NAME} PUBLIC inc)
 target_link_libraries(${PROJECT_NAME} PUBLIC pthread tl::expected)
